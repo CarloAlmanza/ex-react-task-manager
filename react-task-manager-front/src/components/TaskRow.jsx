@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { Link } from "react-router-dom";
 
 const STATUS_CLASS = {
     "To do": "status-todo",
@@ -11,12 +12,15 @@ function TaskRow({ task }) {
 
     return (
         <tr>
-            <td>{task.title}</td>
+            <td>
+                <Link to={`/task/${task.id}`} className="task-title-link">
+                    {task.title}
+                </Link>
+            </td>
             <td className={`status-cell ${statusClass}`}>{task.status}</td>
             <td>{new Date(task.createdAt).toLocaleDateString("it-IT")}</td>
         </tr>
     );
 }
 
-// memo evita il re-render se le props non cambiano
 export default memo(TaskRow);
