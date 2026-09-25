@@ -200,6 +200,12 @@ body {
     word-break: break-word;
 }
 
+.detail-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
 .btn-danger {
     padding: 0.6rem 1.2rem;
     border: none;
@@ -246,6 +252,13 @@ body {
 .modal-content {
     color: #333;
     line-height: 1.5;
+}
+
+.modal-content .task-form {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    max-width: 100%;
 }
 
 .modal-actions {

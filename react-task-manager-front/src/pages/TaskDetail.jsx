@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useGlobal } from "../context/GlobalContext";
 import Modal from "../components/Modal";
+import EditTaskModal from "../components/EditTaskModal";
 
 const STATUS_CLASS = {
     "To do": "status-todo",
@@ -12,9 +13,10 @@ const STATUS_CLASS = {
 function TaskDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { tasks, loading, error, removeTask } = useGlobal();
+    const { tasks, loading, error, removeTask, updateTask } = useGlobal();
 
-    const [showModal, setShowModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
 
     if (loading) return <p>Caricamento in corso…</p>;
     if (error) return <p>Errore: {error}</p>;
@@ -33,22 +35,24 @@ function TaskDetail() {
 
     const statusClass = STATUS_CLASS[task.status] || "";
 
-    function openModal() {
-        setShowModal(true);
-    }
-
-    function closeModal() {
-        setShowModal(false);
-    }
-
     async function handleConfirmDelete() {
         try {
             await removeTask(task.id);
-            setShowModal(false);
+            setShowDeleteModal(false);
             alert("Task eliminata con successo!");
             navigate("/");
         } catch (err) {
-            setShowModal(false);
+            setShowDeleteModal(false);
+            alert(`Errore: ${err.message}`);
+        }
+    }
+
+    async function handleSaveTask(updatedTask) {
+        try {
+            await updateTask(updatedTask);
+            setShowEditModal(false);
+            alert("Task modificata con successo!");
+        } catch (err) {
             alert(`Errore: ${err.message}`);
         }
     }
@@ -80,9 +84,21 @@ function TaskDetail() {
                 </div>
             </div>
 
-            <button className="btn-danger" onClick={openModal}>
-                Elimina Task
-            </button>
+            <div className="detail-actions">
+                <button className="btn-primary" onClick={() => setShowEditModal(true)}>
+                    Modifica Task
+                </button>
+                <button className="btn-danger" onClick={() => setShowDeleteModal(true)}>
+                    Elimina Task
+                </button>
+            </div>
+
+            <EditTaskModal
+                show={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                task={task}
+                onSave={handleSaveTask}
+            />
 
             <Modal
                 title="Conferma eliminazione"
@@ -92,8 +108,8 @@ function TaskDetail() {
                         <strong>{task.title}</strong>? L'operazione non è reversibile.
                     </>
                 }
-                show={showModal}
-                onClose={closeModal}
+                show={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
                 onConfirm={handleConfirmDelete}
                 confirmText="Elimina"
             />

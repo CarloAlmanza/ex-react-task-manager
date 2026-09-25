@@ -61,9 +61,25 @@ export function useTasks() {
         return true;
     }
 
-    // PUT /tasks/:id — placeholder per la prossima milestone
-    async function updateTask(id, updates) {
-        // TODO: implementare nella Milestone 9
+    // PUT /tasks/:id
+    async function updateTask(updatedTask) {
+        const res = await fetch(`${API_URL}/tasks/${updatedTask.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedTask),
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+            throw new Error(data.message || "Errore durante la modifica del task.");
+        }
+
+        setTasks((prev) =>
+            prev.map((t) => (String(t.id) === String(data.task.id) ? data.task : t))
+        );
+
+        return data.task;
     }
 
     return {
