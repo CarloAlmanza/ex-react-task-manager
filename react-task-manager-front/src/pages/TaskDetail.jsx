@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useGlobal } from "../context/GlobalContext";
 
 const STATUS_CLASS = {
@@ -9,7 +9,8 @@ const STATUS_CLASS = {
 
 function TaskDetail() {
     const { id } = useParams();
-    const { tasks, loading, error } = useGlobal();
+    const navigate = useNavigate();
+    const { tasks, loading, error, removeTask } = useGlobal();
 
     if (loading) return <p>Caricamento in corso…</p>;
     if (error) return <p>Errore: {error}</p>;
@@ -21,24 +22,26 @@ function TaskDetail() {
             <div className="page">
                 <h1>Task non trovato</h1>
                 <p>Il task con id <strong>{id}</strong> non esiste o è stato eliminato.</p>
-                <Link to="/" className="btn-link">
-                    ← Torna alla lista
-                </Link>
+                <Link to="/" className="btn-link">← Torna alla lista</Link>
             </div>
         );
     }
 
     const statusClass = STATUS_CLASS[task.status] || "";
 
-    function handleDelete() {
-        console.log("Elimino task", task.id);
+    async function handleDelete() {
+        try {
+            await removeTask(task.id);
+            alert("Task eliminata con successo!");
+            navigate("/");
+        } catch (err) {
+            alert(`Errore: ${err.message}`);
+        }
     }
 
     return (
         <div className="page">
-            <Link to="/" className="btn-link">
-                ← Torna alla lista
-            </Link>
+            <Link to="/" className="btn-link">← Torna alla lista</Link>
 
             <h1>{task.title}</h1>
 

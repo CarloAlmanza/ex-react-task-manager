@@ -7,6 +7,7 @@ export function useTasks() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // GET iniziale
     useEffect(() => {
         async function fetchTasks() {
             try {
@@ -26,6 +27,7 @@ export function useTasks() {
         fetchTasks();
     }, []);
 
+    // POST /tasks
     async function addTask(newTask) {
         const res = await fetch(`${API_URL}/tasks`, {
             method: "POST",
@@ -43,12 +45,25 @@ export function useTasks() {
         return data.task;
     }
 
-    async function removeTask(id) {
-        // TODO: Milestone 8
+    // DELETE /tasks/:id
+    async function removeTask(taskId) {
+        const res = await fetch(`${API_URL}/tasks/${taskId}`, {
+            method: "DELETE",
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+            throw new Error(data.message || "Errore durante l'eliminazione del task.");
+        }
+
+        setTasks((prev) => prev.filter((t) => String(t.id) !== String(taskId)));
+        return true;
     }
 
+    // PUT /tasks/:id — placeholder per la prossima milestone
     async function updateTask(id, updates) {
-        // TODO: Milestone 7
+        // TODO: implementare nella Milestone 9
     }
 
     return {
