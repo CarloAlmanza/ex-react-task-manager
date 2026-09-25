@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useGlobal } from "../context/GlobalContext";
+import Modal from "../components/Modal";
 
 const STATUS_CLASS = {
     "To do": "status-todo",
@@ -11,6 +13,8 @@ function TaskDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { tasks, loading, error, removeTask } = useGlobal();
+
+    const [showModal, setShowModal] = useState(false);
 
     if (loading) return <p>Caricamento in corso…</p>;
     if (error) return <p>Errore: {error}</p>;
@@ -29,12 +33,22 @@ function TaskDetail() {
 
     const statusClass = STATUS_CLASS[task.status] || "";
 
-    async function handleDelete() {
+    function openModal() {
+        setShowModal(true);
+    }
+
+    function closeModal() {
+        setShowModal(false);
+    }
+
+    async function handleConfirmDelete() {
         try {
             await removeTask(task.id);
+            setShowModal(false);
             alert("Task eliminata con successo!");
             navigate("/");
         } catch (err) {
+            setShowModal(false);
             alert(`Errore: ${err.message}`);
         }
     }
@@ -66,9 +80,23 @@ function TaskDetail() {
                 </div>
             </div>
 
-            <button className="btn-danger" onClick={handleDelete}>
+            <button className="btn-danger" onClick={openModal}>
                 Elimina Task
             </button>
+
+            <Modal
+                title="Conferma eliminazione"
+                content={
+                    <>
+                        Sei sicuro di voler eliminare il task{" "}
+                        <strong>{task.title}</strong>? L'operazione non è reversibile.
+                    </>
+                }
+                show={showModal}
+                onClose={closeModal}
+                onConfirm={handleConfirmDelete}
+                confirmText="Elimina"
+            />
         </div>
     );
 }
