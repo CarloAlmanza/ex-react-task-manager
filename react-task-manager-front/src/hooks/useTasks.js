@@ -7,7 +7,6 @@ export function useTasks() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // GET iniziale
     useEffect(() => {
         async function fetchTasks() {
             try {
@@ -27,22 +26,34 @@ export function useTasks() {
         fetchTasks();
     }, []);
 
-    // Placeholder — verranno implementate nelle prossime milestone
     async function addTask(newTask) {
-        // TODO: POST /tasks
+        const res = await fetch(`${API_URL}/tasks`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newTask),
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+            throw new Error(data.message || "Errore durante la creazione del task.");
+        }
+
+        setTasks((prev) => [...prev, data.task]);
+        return data.task;
     }
 
     async function removeTask(id) {
-        // TODO: DELETE /tasks/:id
+        // TODO: Milestone 8
     }
 
     async function updateTask(id, updates) {
-        // TODO: PUT /tasks/:id
+        // TODO: Milestone 7
     }
 
     return {
         tasks,
-        setTasks, // esposto per casi speciali, ma le mutazioni passeranno dalle 3 funzioni
+        setTasks,
         loading,
         error,
         addTask,

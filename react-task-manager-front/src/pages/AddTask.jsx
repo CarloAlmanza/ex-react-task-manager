@@ -1,13 +1,15 @@
 import { useRef, useState } from "react";
+import { useGlobal } from "../context/GlobalContext";
 
 const symbols = "!@#$%^&*()-_=+[]{}|;:'\\\",.<>?/`~";
 
 function AddTask() {
-    // Campo controllato
+    const { addTask } = useGlobal();
+
     const [title, setTitle] = useState("");
     const [titleError, setTitleError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
-    // Campi non controllati
     const descriptionRef = useRef(null);
     const statusRef = useRef(null);
 
@@ -26,7 +28,14 @@ function AddTask() {
         return "";
     }
 
-    function handleSubmit(e) {
+    function resetForm() {
+        setTitle("");
+        setTitleError("");
+        if (descriptionRef.current) descriptionRef.current.value = "";
+        if (statusRef.current) statusRef.current.value = "To do";
+    }
+
+    async function handleSubmit(e) {
         e.preventDefault();
 
         const validationMessage = validateTitle(title);
@@ -39,7 +48,16 @@ function AddTask() {
             status: statusRef.current.value,
         };
 
-        console.log("Nuovo task da inviare:", newTask);
+        try {
+            setSubmitting(true);
+            await addTask(newTask);
+            alert("Task creata con successo!");
+            resetForm();
+        } catch (err) {
+            alert(`Errore: ${err.message}`);
+        } finally {
+            setSubmitting(false);
+        }
     }
 
     return (
@@ -55,6 +73,7 @@ function AddTask() {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="Es. Studiare React"
+                        disabled={submitting}
                     />
                     {titleError && <p className="form-error">{titleError}</p>}
                 </div>
@@ -66,20 +85,26 @@ function AddTask() {
                         ref={descriptionRef}
                         rows={4}
                         placeholder="Descrizione opzionale…"
+                        disabled={submitting}
                     />
                 </div>
 
                 <div className="form-field">
                     <label htmlFor="status">Stato</label>
-                    <select id="status" ref={statusRef} defaultValue="To do">
+                    <select
+                        id="status"
+                        ref={statusRef}
+                        defaultValue="To do"
+                        disabled={submitting}
+                    >
                         <option value="To do">To do</option>
                         <option value="Doing">Doing</option>
                         <option value="Done">Done</option>
                     </select>
                 </div>
 
-                <button type="submit" className="btn-primary">
-                    Aggiungi Task
+                <button type="submit" className="btn-primary" disabled={submitting}>
+                    {submitting ? "Salvataggio…" : "Aggiungi Task"}
                 </button>
             </form>
         </div>
