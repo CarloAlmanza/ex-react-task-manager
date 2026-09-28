@@ -2,18 +2,15 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useGlobal } from "../context/GlobalContext";
 import TaskRow from "../components/TaskRow";
 
-const STATUS_ORDER = {
-    "To do": 0,
-    "Doing": 1,
-    "Done": 2,
-};
+const STATUS_ORDER = { "To do": 0, "Doing": 1, "Done": 2 };
 
 function TaskList() {
-    const { tasks, loading, error } = useGlobal();
+    const { tasks, loading, error, removeMultipleTasks } = useGlobal();
 
     const [sortBy, setSortBy] = useState("createdAt");
     const [sortOrder, setSortOrder] = useState(1);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedTaskIds, setSelectedTaskIds] = useState([]);
 
     const searchInputRef = useRef(null);
     const debounceTimerRef = useRef(null);
@@ -27,19 +24,23 @@ function TaskList() {
         }
     }
 
-    // Debounce: memorizzata con useCallback per non ricrearla ad ogni render
     const debouncedSetSearch = useCallback((value) => {
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-        }
-        debounceTimerRef.current = setTimeout(() => {
-            setSearchQuery(value);
-        }, 300);
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = setTimeout(() => setSearchQuery(value), 300);
     }, []);
 
     function handleSearchChange() {
         debouncedSetSearch(searchInputRef.current?.value ?? "");
     }
+
+    // useCallback: mantiene stabile il riferimento → React.memo su TaskRow funziona
+    const toggleSelection = useCallback((taskId) => {
+        setSelectedTaskIds((prev) =>
+            prev.some((id) => String(id) === String(taskId))
+                ? prev.filter((id) => String(id) !== String(taskId))
+                : [...prev, taskId]
+        );
+    }, []);
 
     const visibleTasks = useMemo(() => {
         const query = searchQuery.trim().toLowerCase();
@@ -52,7 +53,6 @@ function TaskList() {
 
         copy.sort((a, b) => {
             let comparison = 0;
-
             if (sortBy === "title") {
                 comparison = a.title.localeCompare(b.title, "it", { sensitivity: "base" });
             } else if (sortBy === "status") {
@@ -61,12 +61,23 @@ function TaskList() {
                 comparison =
                     new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             }
-
             return comparison * sortOrder;
         });
 
         return copy;
     }, [tasks, searchQuery, sortBy, sortOrder]);
+
+    async function handleDeleteSelected() {
+        try {
+            await removeMultipleTasks(selectedTaskIds);
+            alert(`${selectedTaskIds.length} task eliminate con successo!`);
+            setSelectedTaskIds([]);
+        } catch (err) {
+            alert(`Errore: ${err.message}`);
+            // Svuoto comunque: le task rimaste non sono più selezionabili
+            setSelectedTaskIds([]);
+        }
+    }
 
     if (loading) return <p>Caricamento in corso…</p>;
     if (error) return <p>Errore: {error}</p>;
@@ -80,7 +91,7 @@ function TaskList() {
         <div className="page">
             <h1>Lista dei Task</h1>
 
-            <div className="search-bar">
+            <div className="toolbar">
                 <input
                     ref={searchInputRef}
                     type="text"
@@ -88,6 +99,12 @@ function TaskList() {
                     onChange={handleSearchChange}
                     className="search-input"
                 />
+
+                {selectedTaskIds.length > 0 && (
+                    <button className="btn-danger" onClick={handleDeleteSelected}>
+                        Elimina Selezionate ({selectedTaskIds.length})
+                    </button>
+                )}
             </div>
 
             {visibleTasks.length === 0 ? (
@@ -100,6 +117,7 @@ function TaskList() {
                 <table className="task-table">
                     <thead>
                         <tr>
+                            <th className="cell-checkbox" aria-label="Selezione"></th>
                             <th className="sortable" onClick={() => handleSort("title")}>
                                 Nome{arrowFor("title")}
                             </th>
@@ -113,7 +131,14 @@ function TaskList() {
                     </thead>
                     <tbody>
                         {visibleTasks.map((task) => (
-                            <TaskRow key={task.id} task={task} />
+                            <TaskRow
+                                key={task.id}
+                                task={task}
+                                checked={selectedTaskIds.some(
+                                    (id) => String(id) === String(task.id)
+                                )}
+                                onToggle={toggleSelection}
+                            />
                         ))}
                     </tbody>
                 </table>

@@ -61,6 +61,46 @@ export function useTasks() {
         return true;
     }
 
+    // DELETE /tasks/:id in parallelo (multi-select)
+    async function removeMultipleTasks(ids) {
+        const results = await Promise.allSettled(
+            ids.map((id) =>
+                fetch(`${API_URL}/tasks/${id}`, { method: "DELETE" }).then((res) =>
+                    res.json()
+                )
+            )
+        );
+
+        const succeededIds = [];
+        const failedIds = [];
+
+        results.forEach((result, index) => {
+            const id = ids[index];
+
+            if (result.status === "fulfilled" && result.value?.success) {
+                succeededIds.push(id);
+            } else {
+                failedIds.push(id);
+            }
+        });
+
+        if (succeededIds.length > 0) {
+            setTasks((prev) =>
+                prev.filter(
+                    (t) => !succeededIds.some((id) => String(id) === String(t.id))
+                )
+            );
+        }
+
+        if (failedIds.length > 0) {
+            throw new Error(
+                `Impossibile eliminare i task con id: ${failedIds.join(", ")}`
+            );
+        }
+
+        return succeededIds;
+    }
+
     // PUT /tasks/:id
     async function updateTask(updatedTask) {
         const res = await fetch(`${API_URL}/tasks/${updatedTask.id}`, {
@@ -89,6 +129,7 @@ export function useTasks() {
         error,
         addTask,
         removeTask,
+        removeMultipleTasks,
         updateTask,
     };
 }

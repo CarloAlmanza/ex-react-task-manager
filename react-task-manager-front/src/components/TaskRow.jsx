@@ -7,11 +7,19 @@ const STATUS_CLASS = {
     "Done": "status-done",
 };
 
-function TaskRow({ task }) {
+function TaskRow({ task, checked, onToggle }) {
     const statusClass = STATUS_CLASS[task.status] || "";
 
     return (
-        <tr>
+        <tr className={checked ? "row-selected" : ""}>
+            <td className="cell-checkbox">
+                <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => onToggle(task.id)}
+                    aria-label={`Seleziona ${task.title}`}
+                />
+            </td>
             <td>
                 <Link to={`/task/${task.id}`} className="task-title-link">
                     {task.title}
