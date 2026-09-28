@@ -292,3 +292,22 @@ body {
 .btn-secondary:hover {
     background: #f2f2f2;
 }
+
+.search-bar {
+    margin-bottom: 1rem;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.6rem 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font: inherit;
+    background: #fff;
+}
+
+.search-input:focus {
+    outline: 2px solid #4f9dff;
+    outline-offset: 1px;
+    border-color: #4f9dff;
+}
